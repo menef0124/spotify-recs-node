@@ -14,7 +14,9 @@ User = require('./models/user');
 
 const PORT = 8080;
 
-
+var client_id = 'd4484a4fdf5d46399a175194a99c473a'; // Your client id
+var client_secret = '3e64f96b117e4f49b696a8cf2965f478'; // Your secret
+var redirect_uri = 'http://localhost:8888/callback'; // Your redirect uri
 
 let genRandString = function (len){
     let txt = '';
@@ -41,7 +43,7 @@ app.use(express.static(path.join(__dirname, 'static')))
     .set('views', './views');
 
 app.get('/', (req, res) => {
-    console.log("Hello");
+    console.log("Route works!");
     res.render('home');
 });
 
@@ -50,7 +52,7 @@ app.get('/login', (req, res) => {
     res.cookie(stateKey, state);
 
     let scope = "user-read-private user-read-email";
-    res.redirect(`https://accounts.spotify.com/authorize?`);
+    res.redirect(`https://accounts.spotify.com/authorize?response_type=code&client_id=${client_id}&scope=${scope}&redirect_uri=${redirect_uri}&state=${state}`);
 });
 
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
