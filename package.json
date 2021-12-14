@@ -1,0 +1,12 @@
+{
+  "author": "Joshua Menefee",
+  "name": "spotify-recs-node",
+  "description": "Spotify recommendation playlist generator",
+  "version": "0.0.1",
+  "dependencies": {
+    "cookie-parser": "1.4.6",
+    "express": "4.17.1",
+    "cors": "^2.8.5",
+    "request": "2.88.2"
+  }
+}
