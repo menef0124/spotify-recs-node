@@ -1,9 +1,13 @@
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
+const qs = require('querystring');
 
 //Load middleware
-const hbs = require('express-handlebars');
+const { engine } = require('express-handlebars');
+const { Querystring } = require('request/lib/querystring');
 
 //Requires User class
 User = require('./models/user');
@@ -32,11 +36,21 @@ app.use(express.static(path.join(__dirname, 'static')))
     .use(session({secret: 'superSecret', resave: false, saveUninitialized: false}))
     .use(cors())
     .use(cookieParser())
+    .engine('handlebars', engine())
     .set('view engine', 'handlebars')
-    .engine('handlebars', hbs());
+    .set('views', './views');
 
-app.get('/', (req, res) =>{
+app.get('/', (req, res) => {
     console.log("Hello");
+    res.render('home');
+});
+
+app.get('/login', (req, res) => {
+    let state = genRandString(16);
+    res.cookie(stateKey, state);
+
+    let scope = "user-read-private user-read-email";
+    res.redirect(`https://accounts.spotify.com/authorize?`);
 });
 
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));

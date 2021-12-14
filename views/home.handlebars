@@ -1,0 +1,12 @@
+<div class="container">
+    <div class="row col-10 pb-2 mb-2 border-bottom">
+        {{#if user}}
+            Welcome, {{user.uesrname}}!
+        {{else}}
+            Welcome, Guest!
+        {{/if}}
+    </div>
+    <div id="login" class="row col-10">
+        <a href="/login" class="btn btn-primary">Login</a>
+    </div>
+</div>
