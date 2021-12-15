@@ -8,6 +8,9 @@ const qs = require('querystring');
 //Load middleware
 const { engine } = require('express-handlebars');
 const { Querystring } = require('request/lib/querystring');
+const { redirect } = require('express/lib/response');
+const { request } = require('http');
+const { access } = require('fs');
 
 //Requires User class
 User = require('./models/user');
@@ -52,7 +55,72 @@ app.get('/login', (req, res) => {
     res.cookie(stateKey, state);
 
     let scope = "user-read-private user-read-email";
-    res.redirect(`https://accounts.spotify.com/authorize?response_type=code&client_id=${client_id}&scope=${scope}&redirect_uri=${redirect_uri}&state=${state}`);
+    res.redirect('https://accounts.spotify.com/authorize?' + 
+        qs.stringify({
+            response_type: 'code',
+            client_id: client_id,
+            scope: scope,
+            redirect_uri: redirect_uri,
+            state: state
+        }));
+});
+
+app.get('/callback', (req, res) => {
+    let code = req.query.code || null;
+    let state = req.query.state || null;
+    let storedState = req.cookies ? req.cookies[stateKey] : null;
+
+    if(state === null || state !== storedState0){
+        res.redirect('/#' +
+            qs.stringify({
+                error: 'state_mismatch'
+            }));
+    }
+    else{
+        res.clearCookie(stateKey);
+        let authOptions = {
+            url: 'https://accounts.spotify.com/api/token',
+            form: {
+                code: code,
+                redirect_uri: redirect_uri,
+                grant_type: "authorization_code"
+            },
+            headers: {
+                'Authorization': 'Basic ' + (Buffer.from(client_id + ':' + client_secret).toString('base65'))
+            },
+            json: true
+        };
+
+        request.post(authOptions, (error, res, body) => {
+            if(!error && res.statusCode === 200){
+                let access_token = body.access_token;
+                let refresh_token = body.refresh_token;
+
+                let options = {
+                    url: "https://api.spotify.com/v1/me",
+                    headers: {'Authorization': 'Bearer ' + access_token},
+                    json: true
+                };
+
+                request.get(options, (error, res, body) =>{
+                    console.log(body);
+                });
+
+                res.redirect('/#' +
+                    qs.stringify({
+                        access_token: access_token,
+                        refresh_token: refresh_token
+                    }));
+                
+            }
+            else{
+                res.redirect('/#' +
+                    qs.stringify({
+                        error: 'invalid token'
+                }));
+            }
+        });
+    }
 });
 
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
