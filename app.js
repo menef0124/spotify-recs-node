@@ -1,26 +1,27 @@
+//Load libraries
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const qs = require('querystring');
+const request = require('request');
 
 //Load middleware
 const { engine } = require('express-handlebars');
-const { Querystring } = require('request/lib/querystring');
-const { redirect } = require('express/lib/response');
-const { request } = require('http');
-const { access } = require('fs');
 
 //Requires User class
 User = require('./models/user');
 
+//Node server port
 const PORT = 8080;
 
-var client_id = 'd4484a4fdf5d46399a175194a99c473a'; // Your client id
-var client_secret = '3e64f96b117e4f49b696a8cf2965f478'; // Your secret
-var redirect_uri = 'http://localhost:8888/callback'; // Your redirect uri
+//Client credentials and Redirect URI (Use your own client ID, secret, and redirect URI from your Spotify Developer Dashboard)
+var client_id = 'CLIENT_ID'; // Your client id
+var client_secret = 'CLIENT_SECRET'; // Your secret
+var redirect_uri = 'REDIRECT_URI'; // Your redirect uri
 
+//Used for generating state value
 let genRandString = function (len){
     let txt = '';
     let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -45,11 +46,13 @@ app.use(express.static(path.join(__dirname, 'static')))
     .set('view engine', 'handlebars')
     .set('views', './views');
 
+//Home page route
 app.get('/', (req, res) => {
     console.log("Route works!");
     res.render('home');
 });
 
+//Redirects user to Spotify authentication page
 app.get('/login', (req, res) => {
     let state = genRandString(16);
     res.cookie(stateKey, state);
@@ -65,12 +68,13 @@ app.get('/login', (req, res) => {
         }));
 });
 
+//Receives authorization code
 app.get('/callback', (req, res) => {
     let code = req.query.code || null;
     let state = req.query.state || null;
     let storedState = req.cookies ? req.cookies[stateKey] : null;
 
-    if(state === null || state !== storedState0){
+    if(state === null || state !== storedState){
         res.redirect('/#' +
             qs.stringify({
                 error: 'state_mismatch'
@@ -78,6 +82,7 @@ app.get('/callback', (req, res) => {
     }
     else{
         res.clearCookie(stateKey);
+        console.log(req.query);
         let authOptions = {
             url: 'https://accounts.spotify.com/api/token',
             form: {
@@ -86,34 +91,35 @@ app.get('/callback', (req, res) => {
                 grant_type: "authorization_code"
             },
             headers: {
-                'Authorization': 'Basic ' + (Buffer.from(client_id + ':' + client_secret).toString('base65'))
+                'Authorization': 'Basic ' + (Buffer.from(client_id + ':' + client_secret).toString('base64'))
             },
             json: true
         };
 
-        request.post(authOptions, (error, res, body) => {
-            if(!error && res.statusCode === 200){
+        request.post(authOptions, function(error, response, body) {
+            if(!error && response.statusCode === 200){
                 let access_token = body.access_token;
                 let refresh_token = body.refresh_token;
-
+                let user_info;
+                console.log("Setting options");
                 let options = {
                     url: "https://api.spotify.com/v1/me",
                     headers: {'Authorization': 'Bearer ' + access_token},
                     json: true
                 };
 
-                request.get(options, (error, res, body) =>{
-                    console.log(body);
+                request.get(options, (error, response, body) =>{
+                    console.log("Getting user info");
+                    //user_info = body;
                 });
-
-                res.redirect('/#' +
-                    qs.stringify({
-                        access_token: access_token,
-                        refresh_token: refresh_token
-                    }));
-                
+                console.log("Should have user info");
+                res.render('home', {access_token: access_token,
+                                    refresh_token: refresh_token,
+                                    user_info: user_info}
+                );
             }
             else{
+                console.log("There were errors, idk why");
                 res.redirect('/#' +
                     qs.stringify({
                         error: 'invalid token'
