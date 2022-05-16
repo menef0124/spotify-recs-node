@@ -4,6 +4,7 @@ const path = require('path');
 const session = require('express-session');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const spotifyWebApi = require('spotify-web-api-node');
 const qs = require('querystring');
 const request = require('request');
 
@@ -16,11 +17,52 @@ User = require('./models/user');
 //Node server port
 const PORT = 8080;
 
-//Client credentials and Redirect URI (Use your own client ID, secret, and redirect URI from your Spotify Developer Dashboard)
-var client_id = 'CLIENT_ID'; // Your client id
-var client_secret = 'CLIENT_SECRET'; // Your secret
-var redirect_uri = 'REDIRECT_URI'; // Your redirect uri
+var scopes = ['user-read-private', 'user-read-email'],
+    stateKey = 'spotify_auth_state';
 
+let app = express();
+
+//Express server setup
+app.use(express.static(path.join(__dirname, 'static')))
+    .use(express.urlencoded({extended: false}))
+    .use(session({secret: 'superSecret', resave: false, saveUninitialized: false}))
+    .use(cors())
+    .use(cookieParser())
+    .engine('handlebars', engine())
+    .set('view engine', 'handlebars')
+    .set('views', './views');
+
+//Home page route
+app.get('/', (req, res) => {
+    console.log("Route works!");
+    res.render('home');
+});
+
+//Client credentials and Redirect URI (Use your own client ID, secret, and redirect URI from your Spotify Developer Dashboard)
+var spotify = new spotifyWebApi({
+    clientId: 'd4484a4fdf5d46399a175194a99c473a',
+    clientSecret: '3e64f96b117e4f49b696a8cf2965f478',
+    redirectUri: 'http://localhost:8080/callback'
+});
+
+app.get('/login', (req, res) =>{
+    var authURL = spotify.createAuthorizeURL(scopes, stateKey);
+    console.log(authURL);
+
+    res.redirect(authURL);
+});
+
+app.get('/callback', (req, res) => {
+    let code = req.query.code || null;
+    let state = req.query.state || null;
+    let storedState = req.cookies ? req.cookies[stateKey] : null;
+
+    console.log(code);
+    console.log(state);
+    console.log(storedState);
+});
+
+/*
 //Used for generating state value
 let genRandString = function (len){
     let txt = '';
@@ -128,5 +170,5 @@ app.get('/callback', (req, res) => {
         });
     }
 });
-
+*/
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
