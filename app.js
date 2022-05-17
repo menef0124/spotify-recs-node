@@ -17,9 +17,19 @@ User = require('./models/user');
 //Node server port
 const PORT = 8080;
 
+//Used for generating state value
+let genRandString = function (len){
+    let txt = '';
+    let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+    for(let i=0;i<len;i++){
+        txt += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return txt;
+};
+
 var scopes = ['user-read-private', 'user-read-email'],
     stateKey = 'spotify_auth_state';
-
 let app = express();
 
 //Express server setup
@@ -46,7 +56,10 @@ var spotify = new spotifyWebApi({
 });
 
 app.get('/login', (req, res) =>{
-    var authURL = spotify.createAuthorizeURL(scopes, stateKey);
+    let state = genRandString(16);
+    res.cookie(stateKey, state);
+
+    var authURL = spotify.createAuthorizeURL(scopes, state);
     console.log(authURL);
 
     res.redirect(authURL);
@@ -57,9 +70,20 @@ app.get('/callback', (req, res) => {
     let state = req.query.state || null;
     let storedState = req.cookies ? req.cookies[stateKey] : null;
 
-    console.log(code);
-    console.log(state);
-    console.log(storedState);
+    spotify.authorizationCodeGrant(code).then(
+        function(data){
+            console.log('Access token expires in ' + data.body['expires_in']);
+            console.log('Access token: ' + data.body['access_token']);
+            console.log('Refresh token: ' + data.body['refresh_token']);
+
+            //Token setters
+            spotify.setAccessToken(data.body['access_token']);
+            spotify.setRefreshToken(data.body['refresh_token']);
+        },
+        function(err){
+            console.log('Something fucked up', err);
+        }
+    );
 });
 
 /*
