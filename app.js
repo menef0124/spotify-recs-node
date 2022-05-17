@@ -26,6 +26,11 @@ let genRandString = function (len){
 //Variables for later
 var scopes = ['user-read-private', 'user-read-email'];
 var stateKey = 'spotify_auth_state';
+var user_info;
+var access_token;
+var refresh_token;
+
+//Instantiate Express object
 let app = express();
 
 //Express server setup
@@ -41,14 +46,27 @@ app.use(express.static(path.join(__dirname, 'static')))
 //Home page route
 app.get('/', (req, res) => {
     console.log("Route works!");
-    res.render('home');
+    if(user_info){
+        spotify.getUserPlaylists(user_info['id']).then(
+            function(data){
+                console.log(user_info['id'] + "'s playlists: ", data.body);
+            },
+            function(err){
+                console.log('Something went wrong: ', err);
+            }
+        );
+        res.render('home', {user_info: user_info});
+    }
+    else{
+        res.render('home');
+    }
 });
 
 //Instantiate API object using credentials and Redirect URI (Use your own client ID, secret, and redirect URI from your Spotify Developer Dashboard)
 var spotify = new spotifyWebApi({
-    clientId: 'd4484a4fdf5d46399a175194a99c473a',
-    clientSecret: '69559c4c8fe147f2a3b98e16cacace70',
-    redirectUri: 'http://localhost:8080/callback'
+    clientId: '',
+    clientSecret: '',
+    redirectUri: ''
 });
 
 //Login button route, generates state and authorization URL
@@ -67,8 +85,6 @@ app.get('/callback', (req, res) => {
     let code = req.query.code || null;
     let state = req.query.state || null;
     let storedState = req.cookies ? req.cookies[stateKey] : null;
-    let access_token = "";
-    let refresh_token = "";
 
     //Ensures the same user is trying to go through authorization
     if(state === null || state !== storedState){
@@ -94,8 +110,8 @@ app.get('/callback', (req, res) => {
                     function(data){
                         console.log("getMe worked");
                         console.log(data.body);
-                        let user_info = data.body;
-                        res.render('home', {user_info: user_info, access_token: access_token, refresh_token: refresh_token});
+                        user_info = data.body;
+                        res.redirect('/');
                     },
                     function(err){
                         console.log("getMe didn't work");
