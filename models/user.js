@@ -1,1 +1,0 @@
-//This will contain the model for any user that opens the app

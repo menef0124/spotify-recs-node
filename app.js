@@ -28,8 +28,9 @@ let genRandString = function (len){
     return txt;
 };
 
-var scopes = ['user-read-private', 'user-read-email'],
-    stateKey = 'spotify_auth_state';
+//Variables for later
+var scopes = ['user-read-private', 'user-read-email'];
+var stateKey = 'spotify_auth_state';
 let app = express();
 
 //Express server setup
@@ -48,13 +49,14 @@ app.get('/', (req, res) => {
     res.render('home');
 });
 
-//Client credentials and Redirect URI (Use your own client ID, secret, and redirect URI from your Spotify Developer Dashboard)
+//Instantiate API object using credentials and Redirect URI (Use your own client ID, secret, and redirect URI from your Spotify Developer Dashboard)
 var spotify = new spotifyWebApi({
-    clientId: 'd4484a4fdf5d46399a175194a99c473a',
-    clientSecret: '3e64f96b117e4f49b696a8cf2965f478',
-    redirectUri: 'http://localhost:8080/callback'
+    clientId: '',
+    clientSecret: '',
+    redirectUri: ''
 });
 
+//Login button route, generates state and authorization URL
 app.get('/login', (req, res) =>{
     let state = genRandString(16);
     res.cookie(stateKey, state);
@@ -65,6 +67,7 @@ app.get('/login', (req, res) =>{
     res.redirect(authURL);
 });
 
+//Callback route for authURL to redirect to
 app.get('/callback', (req, res) => {
     let code = req.query.code || null;
     let state = req.query.state || null;
@@ -72,24 +75,44 @@ app.get('/callback', (req, res) => {
     let access_token = "";
     let refresh_token = "";
 
-    //Do tha authorization
-    spotify.authorizationCodeGrant(code).then(
-        function(data){
-            access_token = data.body['access_token'];
-            refresh_token = data.body['refresh_token'];
-            console.log('Access token expires in ' + data.body['expires_in']);
-            console.log('Access token: ' + access_token);
-            console.log('Refresh token: ' + refresh_token);
-            console.log(data.body);
+    //Ensures the same user is trying to go through authorization
+    if(state === null || state !== storedState){
+        console.log("Invalid state");
+        res.redirect('/');
+    }
+    else{
+        //Do tha authorization
+        console.log("auth running");
+        spotify.authorizationCodeGrant(code).then(
+            function(data){
+                access_token = data.body['access_token'];
+                refresh_token = data.body['refresh_token'];
+                console.log(data.body);
 
-            //Token setters
-            spotify.setAccessToken(access_token);
-            spotify.setRefreshToken(refresh_token);
-        },
-        function(err){
-            console.log('Something fucked up', err);
-        }
-    );
+                //Token setters
+                spotify.setAccessToken(access_token);
+                spotify.setRefreshToken(refresh_token);
+
+                //Get current user's info and pass it and their tokens back to the home page
+                console.log("getMe running");
+                spotify.getMe().then(
+                    function(data){
+                        console.log("getMe worked");
+                        console.log(data.body);
+                        let user_info = data.body;
+                        res.render('home', {user_info: user_info, access_token: access_token, refresh_token: refresh_token});
+                    },
+                    function(err){
+                        console.log("getMe didn't work");
+                        console.log("Couldn't get your info, here's probably why: ", err);
+                    }
+                );
+            },
+            function(err){
+                console.log('Auth messed up idk why', err);
+            }
+        );
+    }
 });
 
 /*
