@@ -69,16 +69,22 @@ app.get('/callback', (req, res) => {
     let code = req.query.code || null;
     let state = req.query.state || null;
     let storedState = req.cookies ? req.cookies[stateKey] : null;
+    let access_token = "";
+    let refresh_token = "";
 
+    //Do tha authorization
     spotify.authorizationCodeGrant(code).then(
         function(data){
+            access_token = data.body['access_token'];
+            refresh_token = data.body['refresh_token'];
             console.log('Access token expires in ' + data.body['expires_in']);
-            console.log('Access token: ' + data.body['access_token']);
-            console.log('Refresh token: ' + data.body['refresh_token']);
+            console.log('Access token: ' + access_token);
+            console.log('Refresh token: ' + refresh_token);
+            console.log(data.body);
 
             //Token setters
-            spotify.setAccessToken(data.body['access_token']);
-            spotify.setRefreshToken(data.body['refresh_token']);
+            spotify.setAccessToken(access_token);
+            spotify.setRefreshToken(refresh_token);
         },
         function(err){
             console.log('Something fucked up', err);
