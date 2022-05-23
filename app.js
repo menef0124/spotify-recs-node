@@ -43,6 +43,13 @@ app.use(express.static(path.join(__dirname, 'static')))
     .set('view engine', 'handlebars')
     .set('views', './views');
 
+//Instantiate API object using credentials and Redirect URI (Use your own client ID, secret, and redirect URI from your Spotify Developer Dashboard)
+var spotify = new spotifyWebApi({
+    clientId: '',
+    clientSecret: '',
+    redirectUri: ''
+});
+
 //Home page route
 app.get('/', (req, res) => {
     console.log("Route works!");
@@ -60,13 +67,6 @@ app.get('/', (req, res) => {
     else{
         res.render('home');
     }
-});
-
-//Instantiate API object using credentials and Redirect URI (Use your own client ID, secret, and redirect URI from your Spotify Developer Dashboard)
-var spotify = new spotifyWebApi({
-    clientId: '',
-    clientSecret: '',
-    redirectUri: ''
 });
 
 //Login button route, generates state and authorization URL
