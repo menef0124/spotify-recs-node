@@ -29,6 +29,7 @@ var stateKey = 'spotify_auth_state';
 var user_info;
 var access_token;
 var refresh_token;
+var topTracks;
 
 //Instantiate Express object
 let app = express();
@@ -54,12 +55,23 @@ var spotify = new spotifyWebApi({
 app.get('/', (req, res) => {
     console.log("Route works!");
     if(user_info){
+        /*
         spotify.getUserPlaylists(user_info['id']).then(
             function(data){
                 console.log(user_info['id'] + "'s playlists: ", data.body);
             },
             function(err){
                 console.log('Something went wrong: ', err);
+            }
+        );
+        */
+
+        spotify.getMyTopTracks({time_range: "long_term", limit: 50}).then(
+            function(data){
+                console.log(data.body.items);
+            },
+            function(err){
+                console.log("Something went wrong!", err);
             }
         );
         res.render('home', {user_info: user_info});
