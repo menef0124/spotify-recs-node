@@ -46,9 +46,9 @@ app.use(express.static(path.join(__dirname, 'static')))
 
 //Instantiate API object using credentials and Redirect URI (Use your own client ID, secret, and redirect URI from your Spotify Developer Dashboard)
 var spotify = new spotifyWebApi({
-    clientId: '',
-    clientSecret: '',
-    redirectUri: ''
+    clientId: 'd4484a4fdf5d46399a175194a99c473a',
+    clientSecret: '69559c4c8fe147f2a3b98e16cacace70',
+    redirectUri: 'http://localhost:8080/callback'
 });
 
 //Home page route
@@ -86,10 +86,16 @@ app.get('/login', (req, res) =>{
     let state = genRandString(16);
     res.cookie(stateKey, state);
 
-    var authURL = spotify.createAuthorizeURL(scopes, state);
+    var authURL = spotify.createAuthorizeURL(scopes, state, true);
     console.log(authURL);
 
     res.redirect(authURL);
+});
+
+//Logout button route, signs user out from Spotify then reloads the home page
+app.get('/logout', (req, res) =>{
+    user_info = null;
+    res.redirect('/');
 });
 
 //Callback route for authURL to redirect to
@@ -104,6 +110,8 @@ app.get('/callback', (req, res) => {
         res.redirect('/');
     }
     else{
+        res.clearCookie(stateKey);
+
         //Do tha authorization
         console.log("auth running");
         spotify.authorizationCodeGrant(code).then(
