@@ -24,7 +24,7 @@ let genRandString = function (len){
 };
 
 //Variables for later
-var scopes = ['user-read-private', 'user-read-email'];
+var scopes = ['user-read-private', 'user-read-email', 'user-top-read'];
 var stateKey = 'spotify_auth_state';
 var user_info;
 var access_token;
