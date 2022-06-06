@@ -1,0 +1,22 @@
+<div class="container">
+    <div class="row col-10 pb-2 mb-2 border-bottom">
+        {{#if user_info}}
+            Welcome, {{user_info.display_name}}!
+        {{else}}
+            Welcome, Guest!
+        {{/if}}
+    </div>
+
+    <div id="getRecs" class="row col-10">
+        <a href="/getRecs" class="btn btn-primary">Generate Recommendations!</a>
+    </div>
+    {{#if user_info}}
+        <div id="logout" class="row col-10">
+            <a href="/logout" class="btn btn-primary">Logout</a>
+        </div>
+    {{else}}
+        <div id="login" class="row col-10">
+            <a href="/login" class="btn btn-primary">Login</a>
+        </div>
+    {{/if}}
+</div>

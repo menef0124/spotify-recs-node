@@ -46,14 +46,13 @@ app.use(express.static(path.join(__dirname, 'static')))
 
 //Instantiate API object using credentials and Redirect URI (Use your own client ID, secret, and redirect URI from your Spotify Developer Dashboard)
 var spotify = new spotifyWebApi({
-    clientId: 'd4484a4fdf5d46399a175194a99c473a',
-    clientSecret: '69559c4c8fe147f2a3b98e16cacace70',
-    redirectUri: 'http://localhost:8080/callback'
+    clientId: '',
+    clientSecret: '',
+    redirectUri: ''
 });
 
 //Home page route
 app.get('/', (req, res) => {
-    console.log("Route works!");
     if(user_info){
         /*
         spotify.getUserPlaylists(user_info['id']).then(
@@ -65,16 +64,15 @@ app.get('/', (req, res) => {
             }
         );
         */
-
         spotify.getMyTopTracks({time_range: "long_term", limit: 50}).then(
             function(data){
-                console.log(data.body.items);
+                topTracks = data.body.items;
+                res.render('seeds', {user_info: user_info});
             },
             function(err){
                 console.log("Something went wrong!", err);
             }
         );
-        res.render('home', {user_info: user_info});
     }
     else{
         res.render('home');
@@ -144,6 +142,199 @@ app.get('/callback', (req, res) => {
             }
         );
     }
+});
+
+app.get('/getRecs', (req, res) =>{
+    let market = user_info.country;
+    let topFive = topTracks.slice(0,5);
+    const trackSeeds = [];
+
+    for(let i=0;i<topFive.length;i++){
+        trackSeeds.push(topFive[i].id);
+    }
+    let acousticness = 0;
+    let max_acousticness;
+    let min_acousticness;
+    let danceability = 0;
+    let max_danceability;
+    let min_danceability;
+    let energy = 0;
+    let max_energy;
+    let min_energy;
+    let instrumentalness = 0;
+    let max_instrumentalness;
+    let min_instrumentalness;
+    let key = 0;
+    let max_key;
+    let min_key;
+    let liveness = 0;
+    let max_liveness;
+    let min_liveness;
+    let loudness = 0;
+    let max_loudness;
+    let min_loudness;
+    let speechiness = 0;
+    let max_speechiness;
+    let min_speechiness;
+    let tempo = 0;
+    let max_tempo;
+    let min_tempo;
+    let valence = 0;
+    let max_valence;
+    let min_valence;
+    for(let i=0;i<topTracks.length;i++){
+        let features;
+        spotify.getAudioFeaturesForTrack(topTracks[i].id).then(
+            function(data){
+                features = data.body;
+                if(i == 0){
+                    acousticness = features.acousticness;
+                    max_acousticness = features.acousticness;
+                    min_acousticness = features.acousticness;
+                    danceability = features.danceability;
+                    max_danceability = features.danceability;
+                    min_danceability = features.danceability;
+                    energy = features.energy;
+                    max_energy = features.energy;
+                    min_energy = features.energy;
+                    instrumentalness = features.instrumentalness;
+                    max_instrumentalness = features.instrumentalness;
+                    min_instrumentalness = features.instrumentalness;
+                    key = features.key;
+                    max_key = features.key;
+                    min_key = features.key;
+                    liveness = features.liveness;
+                    max_liveness = features.liveness;
+                    min_liveness = features.liveness;
+                    loudness = features.loudness;
+                    max_loudness = features.loudness;
+                    min_loudness = features.loudness;
+                    speechiness = features.speechiness;
+                    max_speechiness = features.speechiness;
+                    min_speechiness = features.speechiness;
+                    tempo = features.tempo;
+                    max_tempo = features.tempo;
+                    min_tempo = features.tempo;
+                    valence = features.valence;
+                    max_valence = features.valence;
+                    min_valence = features.valence;
+                }
+                else{
+                    acousticness += features.acousticness;
+                    danceability += features.danceability;
+                    energy += features.energy;
+                    instrumentalness += features.instrumentalness;
+                    key += features.key;
+                    liveness += features.liveness;
+                    loudness += features.loudness;
+                    speechiness += features.speechiness;
+                    tempo += features.tempo;
+                    valence += features.valence;
+        
+                    if(features.acousticness <= min_acousticness)
+                        min_acousticness = features.acousticness;
+                    if(features.acousticness >= max_acousticness)
+                        max_acousticness = features.acousticness;
+                    if(features.danceability <= min_danceability)
+                        min_danceability = features.danceability;
+                    if(features.danceability >= max_danceability)
+                        max_danceability = features.danceability;
+                    if(features.energy <= min_energy)
+                        min_energy = features.energy;
+                    if(features.energy >= max_energy)
+                        max_energy = features.energy;
+                    if(features.instrumentalness <= min_instrumentalness)
+                        min_instrumentalness = features.instrumentalness;
+                    if(features.instrumentalness >= max_instrumentalness)
+                        max_instrumentalness = features.instrumentalness;
+                    if(features.key <= min_key)
+                        min_key = features.key;
+                    if(features.key >= max_key)
+                        max_key = features.key;
+                    if(features.liveness <= min_liveness)
+                        min_liveness = features.liveness;
+                    if(features.liveness >= max_liveness)
+                        max_liveness = features.liveness;
+                    if(features.loudness <= min_loudness)
+                        min_loudness = features.loudness;
+                    if(features.loudness >= max_loudness)
+                        max_loudness = features.loudness;
+                    if(features.speechiness <= min_speechiness)
+                        min_speechiness = features.speechiness;
+                    if(features.speechiness >= max_speechiness)
+                        max_speechiness = features.speechiness;
+                    if(features.tempo <= min_tempo)
+                        min_tempo = features.tempo;
+                    if(features.tempo >= max_tempo)
+                        max_tempo = features.tempo;
+                    if(features.valence <= min_valence)
+                        min_valence = features.valence;
+                    if(features.valence >= max_valence)
+                        max_valence = features.valence;
+                }
+            },
+            function(err){
+                console.log("Something went wrong!", err);
+            }
+        );
+    }
+
+    acousticness /= 50.0;
+    danceability /= 50.0;
+    energy /= 50.0;
+    instrumentalness /= 50.0;
+    key /= 50;
+    liveness /= 50.0;
+    loudness /= 50.0;
+    speechiness /= 50.0;
+    tempo /= 50.0;
+    valence /= 50.0;
+
+    let recs;
+    spotify.getRecommendations({
+        seed_tracks: trackSeeds,
+        limit: 3,
+        market: market,
+        target_acousticness: acousticness,
+        min_acousticness: min_acousticness,
+        max_acousticness: max_acousticness,
+        target_danceability: danceability,
+        min_danceability: min_danceability,
+        max_danceability: max_danceability,
+        target_energy: energy,
+        min_energy: min_energy,
+        max_energy: max_energy,
+        target_instrumentalness: instrumentalness,
+        min_instrumentalness: min_instrumentalness,
+        max_instrumentalness: max_instrumentalness,
+        target_key: key,
+        min_key: min_key,
+        max_key: max_key,
+        target_liveness: liveness,
+        min_liveness: min_liveness,
+        max_liveness: max_liveness,
+        target_loudness: loudness,
+        min_loudness: min_loudness,
+        max_loudness: max_loudness,
+        target_speechiness: speechiness,
+        min_speechiness: min_speechiness,
+        max_speechiness: max_speechiness,
+        target_tempo: tempo,
+        min_tempo: min_tempo,
+        max_tempo: max_tempo,
+        target_valence: valence,
+        min_valence: min_valence,
+        max_valence: max_valence
+    }).then(
+        function(data){
+            recs = data.body.tracks;
+            console.log(recs);
+        },
+        function(err){
+            console.log("Something went wrong!", err);
+        }
+    );
+
 });
 
 app.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
