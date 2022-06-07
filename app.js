@@ -46,9 +46,9 @@ app.use(express.static(path.join(__dirname, 'static')))
 
 //Instantiate API object using credentials and Redirect URI (Use your own client ID, secret, and redirect URI from your Spotify Developer Dashboard)
 var spotify = new spotifyWebApi({
-    clientId: '',
-    clientSecret: '',
-    redirectUri: ''
+    clientId: 'd4484a4fdf5d46399a175194a99c473a',
+    clientSecret: '69559c4c8fe147f2a3b98e16cacace70',
+    redirectUri: 'http://localhost:8080/callback'
 });
 
 //Home page route
@@ -67,7 +67,7 @@ app.get('/', (req, res) => {
         spotify.getMyTopTracks({time_range: "long_term", limit: 50}).then(
             function(data){
                 topTracks = data.body.items;
-                res.render('seeds', {user_info: user_info});
+                res.render('recs', {user_info: user_info});
             },
             function(err){
                 console.log("Something went wrong!", err);
@@ -328,7 +328,9 @@ app.get('/getRecs', (req, res) =>{
     }).then(
         function(data){
             recs = data.body.tracks;
-            console.log(recs);
+            for(let i=0;i<recs.length;i++){
+                console.log(recs[i].name);
+            }
         },
         function(err){
             console.log("Something went wrong!", err);
